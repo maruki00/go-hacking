@@ -22,23 +22,26 @@ func scanPort(address string, proc string, port int) bool {
 func ScanChunkPorts(wg *sync.WaitGroup, host string, proc string, ports []int) {
 
 	defer wg.Done()
-
 	for _, port := range ports {
 		if scanPort(host, proc, port) {
-			fmt.Println("Port %s is Open.", port)
+			fmt.Printf("Port %d is Open.\n", port)
 		}
 	}
+
 }
 
 func run(host string, proc string, thread int, ports []int) {
-	var wg *sync.WaitGroup
-	wg.Add(thread)
+	var wg sync.WaitGroup
+
 	chunk := len(ports) / thread
 	for i := 0; i < thread; i++ {
+		wg.Add(1)
 		start := i * chunk
 		end := (i * chunk) + chunk
-		go ScanChunkPorts(wg, host, proc, ports[start:end])
+
+		go ScanChunkPorts(&wg, host, proc, ports[start:end])
 	}
+	wg.Wait()
 }
 
 func main() {
@@ -79,6 +82,6 @@ func main() {
 	}
 
 	run(*host, *proc, *thread, ps)
-	fmt.Println("result : ", *host, *proc, *ports, *thread, ps)
+	// fmt.Println("result : ", *host, *proc, *ports, *thread, ps)
 
 }
