@@ -48,7 +48,6 @@ func main() {
 		panic("not matched")
 	}
 
-	
 	fmt.Println("result : ", *newMac, *iFace)
 
 }
