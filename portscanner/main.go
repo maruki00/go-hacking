@@ -3,16 +3,43 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
+	"sync"
 )
 
-// func scanPort(address string, port int) error {
-// 	host := fmt.Sprintf("%s:%d", address, port)
-// 	con, err := net.Dial("tcp", host)
-// }
+func scanPort(address string, proc string, port int) bool {
+	host := fmt.Sprintf("%s:%d", address, port)
+	con, err := net.Dial(proc, host)
+	if err != nil {
+		return false
+	}
+	con.Close()
+	return true
+}
 
-// func run()
+func ScanChunkPorts(wg *sync.WaitGroup, host string, proc string, ports []int) {
+
+	defer wg.Done()
+
+	for _, port := range ports {
+		if scanPort(host, proc, port) {
+			fmt.Println("Port %s is Open.", port)
+		}
+	}
+}
+
+func run(host string, proc string, thread int, ports []int) {
+	var wg *sync.WaitGroup
+	wg.Add(thread)
+	chunk := len(ports) / thread
+	for i := 0; i < thread; i++ {
+		start := i * chunk
+		end := (i * chunk) + chunk
+		go ScanChunkPorts(wg, host, proc, ports[start:end])
+	}
+}
 
 func main() {
 
@@ -22,9 +49,7 @@ func main() {
 	thread := flag.Int("thread", 1, "how many thread do you wanna use")
 	flag.Parse()
 
-	// wg * sync.WaitGroup
-
-	var ps []int64
+	var ps []int
 	if strings.Contains(*ports, "-") {
 		tmp := strings.Split(*ports, "-")
 		start, err1 := strconv.ParseInt(tmp[0], 10, 64)
@@ -33,7 +58,7 @@ func main() {
 			panic("invalid port number")
 		}
 		for i := start; i <= end; i++ {
-			ps = append(ps, i)
+			ps = append(ps, int(i))
 		}
 	} else if strings.Contains(*ports, ",") {
 		tmp := strings.Split(*ports, ",")
@@ -42,7 +67,7 @@ func main() {
 			if err != nil {
 				panic("invalid port number")
 			}
-			ps = append(ps, val)
+			ps = append(ps, int(val))
 		}
 
 	} else {
@@ -50,9 +75,10 @@ func main() {
 		if err != nil {
 			panic("invalid port number")
 		}
-		ps = append(ps, val)
+		ps = append(ps, int(val))
 	}
 
+	run(*host, *proc, *thread, ps)
 	fmt.Println("result : ", *host, *proc, *ports, *thread, ps)
 
 }
