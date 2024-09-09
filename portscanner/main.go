@@ -36,7 +36,7 @@ func main() {
 			ps = append(ps, i)
 		}
 	} else if strings.Contains(*ports, ",") {
-		tmp := strings.Split(*ports, "-")
+		tmp := strings.Split(*ports, ",")
 		for _, item := range tmp {
 			val, err := strconv.ParseInt(item, 10, 64)
 			if err != nil {
